@@ -9,6 +9,8 @@ import ProductItem from "./Components/ProductItem";
 import Tech2 from "./Components/Tech2";
 import ConvertCurrency from "./Components/ConvertCurrency";
 import Counter from "./Components/Counter";
+import Login from "./Components/Form/Login";
+import Toggle from "./Components/Toggle/Toggle";
 
 function App() {
   const content = {
@@ -108,7 +110,7 @@ function App() {
       </Products> */}
       {/* <Tech2 onData={handleData}/> */}
 
-      <Counter start={1} step={2} />
+      <Toggle />
     </>
   );
 }
