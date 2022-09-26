@@ -1,0 +1,19 @@
+body{
+    color: red;
+
+    .header{
+        a{
+            color: blue;
+            text-decoration: none;
+
+            &:hover{
+                color: yellow;
+                font-weight: bold;
+            }
+
+            &::before{
+                content: 'a';
+            }
+        }
+    }
+}

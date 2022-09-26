@@ -11,6 +11,7 @@ import ConvertCurrency from "./Components/ConvertCurrency";
 import Counter from "./Components/Counter";
 import Login from "./Components/Form/Login";
 import Toggle from "./Components/Toggle/Toggle";
+import Customer from "./Components/CRUD/Customer";
 
 function App() {
   const content = {
@@ -110,7 +111,7 @@ function App() {
       </Products> */}
       {/* <Tech2 onData={handleData}/> */}
 
-      <Toggle />
+      <Customer />
     </>
   );
 }
