@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./Customer.scss";
 import config from "../../config.json";
+import HttpClient from "./HttpClient";
 
 export class Customer extends Component {
   constructor(props) {
@@ -13,29 +14,111 @@ export class Customer extends Component {
         status: "all",
         keyword: "",
       },
+      paginate: {
+        currentPage: 1,
+        totalPage: 0,
+      },
     };
 
     this.customerApi = config.SERVER_API + "/customers";
+    this.perPage = config.PER_PAGE;
+    this.client = new HttpClient();
   }
 
-  getCustomers = (filters={}) => {
+  getCustomers = async (filters = {}) => {
+    const { currentPage } = this.state.paginate;
 
-    let searchApi = this.customerApi;
+    let searchApi = `${this.customerApi}?_page=${currentPage}&_limit=${this.perPage}`;
 
-    if (Object.keys(filters).length){
-        const params = new URLSearchParams(filters).toString();
-        
-        searchApi = this.customerApi+'?'+params;
-    }    
-    
-    fetch(searchApi)
-      .then((response) => response.json())
-      .then((customers) => {
-        this.setState({
-          customers: customers,
-        });
+    if (Object.keys(filters).length) {
+      const params = new URLSearchParams(filters).toString();
+
+      searchApi = this.customerApi + "&" + params;
+    }
+
+    const clientResult = await this.client.get(searchApi);
+    const totalCount = clientResult.headers.get("x-total-count");
+    const totalPage = Math.ceil(totalCount / this.perPage);
+
+    const paginate = { ...this.state.paginate };
+    paginate.totalPage = totalPage;
+
+    clientResult.json().then((customers) => {
+      this.setState({
+        customers: customers,
+        paginate: paginate,
       });
+    });
   };
+
+  renderPaginate = () => {
+    const { totalPage, currentPage } = this.state.paginate;
+
+    let pageItemJsx = [];
+
+    for (let i = 1; i <= totalPage; i++) {
+      pageItemJsx.push(
+        <li
+          key={i}
+          className={`page-item${currentPage == i ? " active" : null}`}
+        >
+          <a className="page-link" href="#" onClick={(e) => {
+            e.preventDefault();
+            this.goPaginate(i);
+          }}>
+            {i}
+          </a>
+        </li>
+      );
+    }
+
+    const jsx = (
+      <nav className="d-flex justify-content-end">
+        <ul className="pagination">
+          <li className="page-item">
+            <a className="page-link" href="#">
+              Trước
+            </a>
+          </li>
+          {pageItemJsx}
+          <li className="page-item">
+            <a className="page-link" href="#">
+              Sau
+            </a>
+          </li>
+        </ul>
+      </nav>
+    );
+
+    return jsx;
+  };
+
+  //IIFE 
+  
+  updateCurrentPage = (paginate) => {
+    this.setState({
+      paginate: paginate
+    })
+  }
+
+  // goPaginate = async (page) => {
+  //   const paginate = {...this.state.paginate};
+  //   paginate.currentPage = page;
+    
+  //   await this.updateCurrentPage(paginate);
+
+  //   // await (() => {
+  //   //   this.setState({
+  //   //     paginate: paginate
+  //   //   })
+  //   // })()
+    
+  //   this.getCustomers();
+  // }
+
+  goPaginate = (page) => {
+
+  }
 
   componentDidMount = () => {
     this.getCustomers();
@@ -44,35 +127,36 @@ export class Customer extends Component {
   handleFilter = (e) => {
     e.preventDefault();
 
-    const {filters} = this.state;
+    const { filters } = this.state;
 
-    let {status, keyword} = filters;
-    
-    const filtersObj = {}
+    let { status, keyword } = filters;
 
-    if (status==='active' || status==='inactive'){
-        status = status==='active'?1:0;
-        
-        filtersObj.status = status;
+    const filtersObj = {};
+
+    if (status === "active" || status === "inactive") {
+      status = status === "active" ? 1 : 0;
+
+      filtersObj.status = status;
     }
 
-    if (keyword!==''){
-        filtersObj.q = keyword;
+    if (keyword !== "") {
+      filtersObj.q = keyword;
     }
 
     this.getCustomers(filtersObj);
   };
 
   handleChange = (e) => {
-    const filters = {...this.state.filters}
+    const filters = { ...this.state.filters };
     filters[e.target.name] = e.target.value;
     
     this.setState({
-        filters: filters
-    })
+      filters: filters,
+    });
   };
 
   render() {
+    console.log('re-render 2');
     const { customers } = this.state;
 
     const jsx = customers.map(({ id, name, email, phone, status }, index) => {
@@ -160,9 +244,23 @@ export class Customer extends Component {
           </thead>
           <tbody>{jsx}</tbody>
         </table>
+        {this.renderPaginate()}
       </div>
     );
   }
 }
 
 export default Customer;
+
+/*
+Các bước xây dựng tính năng phân trang
+=> Phần 1: Render danh sách
+1. Xác định được số bản ghi trên 1 trang (config)
+2. Gọi tham số _limit và _page vào API => Giới hạn số lượng bản ghi trên 1 trang (Render customer)
+
+=> Phần 2: Render phân trang
+3. Lấy tổng số bản ghi => Lấy từ API
+4. Tính tổng số trang: Math.ceil(tổng số bản ghi / số bản ghi trên 1 trang)
+5. Render danh sách trang
+6. Chuyển trang khi click vào vào số trang
+*/

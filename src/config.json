@@ -1,3 +1,4 @@
 {
-    "SERVER_API": "http://localhost:3004"
+    "SERVER_API": "http://localhost:3004",
+    "PER_PAGE": 3
 }
