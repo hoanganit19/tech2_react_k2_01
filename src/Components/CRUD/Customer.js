@@ -33,7 +33,9 @@ export class Customer extends Component {
     if (Object.keys(filters).length) {
       const params = new URLSearchParams(filters).toString();
 
-      searchApi = this.customerApi + "&" + params;
+      //searchApi = this.customerApi + "&" + params;
+
+      searchApi = `${this.customerApi}?_page=${currentPage}&_limit=${this.perPage}&${params}`;
     }
 
     const clientResult = await this.client.get(searchApi);
@@ -52,6 +54,7 @@ export class Customer extends Component {
   };
 
   renderPaginate = () => {
+    // console.log("paginate");
     const { totalPage, currentPage } = this.state.paginate;
 
     let pageItemJsx = [];
@@ -62,10 +65,14 @@ export class Customer extends Component {
           key={i}
           className={`page-item${currentPage == i ? " active" : null}`}
         >
-          <a className="page-link" href="#" onClick={(e) => {
-            e.preventDefault();
-            this.goPaginate(i);
-          }}>
+          <a
+            className="page-link"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              this.goPaginate(i);
+            }}
+          >
             {i}
           </a>
         </li>
@@ -93,18 +100,18 @@ export class Customer extends Component {
     return jsx;
   };
 
-  //IIFE 
-  
+  //IIFE
+
   updateCurrentPage = (paginate) => {
     this.setState({
-      paginate: paginate
-    })
-  }
+      paginate: paginate,
+    });
+  };
 
   // goPaginate = async (page) => {
   //   const paginate = {...this.state.paginate};
   //   paginate.currentPage = page;
-    
+
   //   await this.updateCurrentPage(paginate);
 
   //   // await (() => {
@@ -112,21 +119,39 @@ export class Customer extends Component {
   //   //     paginate: paginate
   //   //   })
   //   // })()
-    
+
   //   this.getCustomers();
   // }
 
   goPaginate = (page) => {
+    const paginate = { ...this.state.paginate };
+    paginate.currentPage = page;
 
-  }
-
-  componentDidMount = () => {
-    this.getCustomers();
+    this.setState({
+      paginate: paginate,
+    });
   };
 
-  handleFilter = (e) => {
-    e.preventDefault();
+  componentDidMount = () => {
+    const filtersObj = this.getFilterObj();
+    this.getCustomers(filtersObj);
+  };
 
+  componentDidUpdate = (prevProps, prevState) => {
+    const { currentPage: prevCurrentPage } = prevState.paginate;
+
+    const { currentPage } = this.state.paginate;
+
+    if (currentPage != prevCurrentPage) {
+      const filtersObj = this.getFilterObj();
+
+      this.getCustomers(filtersObj);
+    }
+    // console.log('Update...');
+    //Đặc biệt lưu ý phải check prevState và currentState => Nếu khác nhau thì sẽ gọi API
+  };
+
+  getFilterObj = () => {
     const { filters } = this.state;
 
     let { status, keyword } = filters;
@@ -143,20 +168,27 @@ export class Customer extends Component {
       filtersObj.q = keyword;
     }
 
+    return filtersObj;
+  };
+
+  handleFilter = (e) => {
+    e.preventDefault();
+    const filtersObj = this.getFilterObj();
+
     this.getCustomers(filtersObj);
   };
 
   handleChange = (e) => {
     const filters = { ...this.state.filters };
     filters[e.target.name] = e.target.value;
-    
+
     this.setState({
       filters: filters,
     });
   };
 
   render() {
-    console.log('re-render 2');
+    // console.log("re-render 2");
     const { customers } = this.state;
 
     const jsx = customers.map(({ id, name, email, phone, status }, index) => {
@@ -198,6 +230,8 @@ export class Customer extends Component {
     return (
       <div className="container">
         <h1>Danh sách khách hàng</h1>
+        <a href="" className="btn btn-primary">Thêm mới</a>
+        <hr/>
         <form onSubmit={this.handleFilter}>
           <div className="row">
             <div className="col-3">
