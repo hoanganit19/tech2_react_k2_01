@@ -168,6 +168,10 @@ export class Customer extends Component {
 
       this.getCustomers(filtersObj);
     }
+
+    if (prevState.customers !== this.state.customers){
+      this.getCustomers();
+    }
     // console.log('Update...');
     //Đặc biệt lưu ý phải check prevState và currentState => Nếu khác nhau thì sẽ gọi API
   };
@@ -234,9 +238,8 @@ export class Customer extends Component {
     this.setState({ modal: modal });
   };
 
-  handleSubmitAdd = (e) => {
-    e.preventDefault();
-
+  handleSubmitAdd = (isAdd = false) => {
+   
     let { name, email, phone, status } = this.state.form;
 
     status = parseInt(status);
@@ -293,7 +296,10 @@ export class Customer extends Component {
         if (response!==''){
           toast.success('Thêm khách hàng thành công');
           this.resetForm();
-          this.closeModalAdd();
+          if (!isAdd){
+            this.closeModalAdd();
+          }
+          
         }
       });
 
@@ -346,6 +352,24 @@ export class Customer extends Component {
       form: data,
     });
   };
+
+  handleKeyboardSave = (e) => {
+    const keyCode = e.keyCode;
+    
+    switch (keyCode){
+      case 114:
+        this.handleSubmitAdd();
+      break; 
+      
+      case 115:
+        this.handleSubmitAdd(true);
+      break;
+
+      default:
+      break;  
+    }
+   
+  }
 
   render() {
     // console.log("re-render 2");
@@ -444,7 +468,8 @@ export class Customer extends Component {
           <tbody>{jsx}</tbody>
         </table>
         {this.renderPaginate()}
-        <Modal show={modal.isShow} animation={true}>
+        <div onKeyUp={this.handleKeyboardSave}>
+          <Modal show={modal.isShow} animation={true} onEscapeKeyDown={this.closeModalAdd}>
           <Modal.Header>
             <Modal.Title>Thêm khách hàng</Modal.Title>
             <button
@@ -463,7 +488,10 @@ export class Customer extends Component {
                 :
                 null
             }
-            <form onSubmit={this.handleSubmitAdd}>
+            <form onSubmit={(e)=>{
+              e.preventDefault();
+              this.handleSubmitAdd();
+            }} >
               <div className="mb-3">
                 <label>Tên</label>
                 <input
@@ -535,6 +563,13 @@ export class Customer extends Component {
               <button type="submit" className="btn btn-primary me-3">
                 Lưu
               </button>
+              <button type="submit" className="btn btn-primary me-3"
+              onClick={(e) => {
+                e.preventDefault();
+                this.handleSubmitAdd(true);
+              }}>
+                Lưu & Thêm
+              </button>
               <button
                 type="button"
                 className="btn btn-danger"
@@ -545,6 +580,8 @@ export class Customer extends Component {
             </form>
           </Modal.Body>
         </Modal>
+        </div>
+        
         <ToastContainer />
       </div>
     );
