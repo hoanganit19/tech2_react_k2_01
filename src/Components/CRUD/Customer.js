@@ -4,8 +4,8 @@ import "./Customer.scss";
 import config from "../../config.json";
 import HttpClient from "./HttpClient";
 import Modal from "react-bootstrap/Modal";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export class Customer extends Component {
   constructor(props) {
@@ -38,7 +38,9 @@ export class Customer extends Component {
         email: {},
         phone: {},
         status: {},
-      }
+      },
+
+      currentId: 0
     };
 
     this.customerApi = config.SERVER_API + "/customers";
@@ -169,9 +171,7 @@ export class Customer extends Component {
       this.getCustomers(filtersObj);
     }
 
-    if (prevState.customers !== this.state.customers){
-      this.getCustomers();
-    }
+    
     // console.log('Update...');
     //Đặc biệt lưu ý phải check prevState và currentState => Nếu khác nhau thì sẽ gọi API
   };
@@ -224,12 +224,13 @@ export class Customer extends Component {
     return pattern.test(phone);
   };
 
-  openModalAdd = (e) => {
-    e.preventDefault();
+  openModalAdd = () => {
+    //e.preventDefault();
 
     const modal = { ...this.state.modal };
     modal.isShow = true;
-    this.setState({ modal: modal });
+    this.resetForm();
+    this.setState({ modal: modal, currentId: 0});
   };
 
   closeModalAdd = () => {
@@ -239,7 +240,6 @@ export class Customer extends Component {
   };
 
   handleSubmitAdd = (isAdd = false) => {
-   
     let { name, email, phone, status } = this.state.form;
 
     status = parseInt(status);
@@ -269,79 +269,79 @@ export class Customer extends Component {
       errors.phone.phone = "Vui lòng nhập số điện thoại hợp lệ";
     }
 
-  
-    if (status!==0 && status!==1){
-      errors.status.required = 'Trạng thái không hợp lệ';
+    if (status !== 0 && status !== 1) {
+      errors.status.required = "Trạng thái không hợp lệ";
     }
 
     this.setState({
-        errors: errors,
+      errors: errors,
     });
 
-    if (!this.isErrors(errors)){
-      
-      //Thêm dữ liệu
+    if (!this.isErrors(errors)) {
+      console.log(this.state.currentId);
+      if (this.state.currentId == 0){
+        //Thêm dữ liệu
 
-      this.client.post(
-        this.customerApi,
-        {
+        this.client
+        .post(this.customerApi, {
           name: name,
           email: email,
           phone: phone,
-          status: status
-        }
-      )
-      .then(response => response.json())
-      .then(response => {
-        if (response!==''){
-          toast.success('Thêm khách hàng thành công');
-          this.resetForm();
-          if (!isAdd){
-            this.closeModalAdd();
-          }
-          
-        }
-      });
+          status: status,
+        })
+        .then((response) => response.json())
+        .then((response) => {
+          if (response !== "") {
+            toast.success("Thêm khách hàng thành công");
+            this.resetForm();
+            this.getCustomers();
 
-     
-  }
+            if (!isAdd) {
+              this.closeModalAdd();
+            }
+          }
+        });
+      }else{
+        console.log('Update');
+      }
+      
+    }
   };
 
-   getError = (fieldName) => {
+  getError = (fieldName) => {
     const { errors } = this.state;
-    
+
     const error = errors[fieldName];
 
     const keys = Object.keys(error);
 
     return error[keys[0]];
-  }
+  };
 
   isErrors = (errors) => {
-
     const keys = Object.keys(errors);
 
-    if (keys.length){
-        const check = keys.some(key => {
-           return Object.keys(errors[key]).length>0;
-        })
+    if (keys.length) {
+      const check = keys.some((key) => {
+        return Object.keys(errors[key]).length > 0;
+      });
 
-        return check;
+      return check;
     }
 
     return false;
-  }
+  };
 
   resetForm = () => {
     this.setState({
-        form: {
-            name: '',
-            email: '',
-            phone: '',
-            status: 0
-        }
-    })
-  }
+      form: {
+        name: "",
+        email: "",
+        phone: "",
+        status: 0,
+      },
+    });
+  };
 
   handleChangeFormAdd = (e) => {
     const data = { ...this.state.form }; //clone object
@@ -355,27 +355,44 @@ export class Customer extends Component {
 
   handleKeyboardSave = (e) => {
     const keyCode = e.keyCode;
-    
-    switch (keyCode){
+
+    switch (keyCode) {
       case 114:
         this.handleSubmitAdd();
-      break; 
-      
+        break;
+
       case 115:
         this.handleSubmitAdd(true);
-      break;
+        break;
 
       default:
-      break;  
+        break;
     }
-   
-  }
+  };
+
+  handleGetCustomer = (customerId) => {
+    const customerDetailApi = this.customerApi + "/" + customerId;
+    this.client
+      .get(customerDetailApi)
+      .then((response) => response.json())
+      .then((customer) => {
+
+        this.openModalAdd();
+
+        this.setState({
+          form: customer,
+          currentId: customerId
+        });
+
+        
+      });
+  };
 
   render() {
     // console.log("re-render 2");
-    const { customers, modal, form, errors, msg } = this.state;
+    const { customers, modal, form, errors, currentId } = this.state;
 
-    const {name, email, phone, status} = form;
+    const { name, email, phone, status } = form;
 
     const jsx = customers.map(({ id, name, email, phone, status }, index) => {
       const statusBtn = status ? (
@@ -389,7 +406,14 @@ export class Customer extends Component {
       );
 
       const editBtn = (
-        <a href="#" className="btn btn-warning">
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            this.handleGetCustomer(id);
+          }}
+          className="btn btn-warning"
+        >
           Sửa
         </a>
       );
@@ -416,7 +440,7 @@ export class Customer extends Component {
     return (
       <div className="container">
         <h1 className="page-title">Danh sách khách hàng</h1>
-        
+
         <a href="#" className="btn btn-primary" onClick={this.openModalAdd}>
           Thêm mới
         </a>
@@ -469,119 +493,135 @@ export class Customer extends Component {
         </table>
         {this.renderPaginate()}
         <div onKeyUp={this.handleKeyboardSave}>
-          <Modal show={modal.isShow} animation={true} onEscapeKeyDown={this.closeModalAdd}>
-          <Modal.Header>
-            <Modal.Title>Thêm khách hàng</Modal.Title>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={this.closeModalAdd}
-            ></button>
-          </Modal.Header>
-          <Modal.Body>
-            {
-                this.isErrors(errors)
-                ?
-                <div className="alert alert-danger text-center">
-                    Vui lòng kiểm tra dữ liệu bên dưới
-                </div>
-                :
-                null
-            }
-            <form onSubmit={(e)=>{
-              e.preventDefault();
-              this.handleSubmitAdd();
-            }} >
-              <div className="mb-3">
-                <label>Tên</label>
-                <input
-                  type="text"
-                  className={`form-control ${
-                    this.getError('name') ? "is-invalid" : ''
-                  }`}
-                  name="name"
-                  placeholder="Tên... "
-                  onChange={this.handleChangeFormAdd}
-                  value={name}
-                />
-                {this.getError('name') ? (
-                  <div className="invalid-feedback">{this.getError('name')}</div>
-                ) : null}
-              </div>
-
-              <div className="mb-3">
-                <label>Email</label>
-                <input
-                  type="text"
-                  className={`form-control ${
-                    this.getError('email') ? "is-invalid" : ''
-                  }`}
-                  name="email"
-                  placeholder="Email... "
-                  onChange={this.handleChangeFormAdd}
-                  value={email}
-                />
-                {this.getError('email') ? (
-                  <div className="invalid-feedback">{this.getError('email')}</div>
-                ) : null}
-              </div>
-
-              <div className="mb-3">
-                <label>Điện thoại</label>
-                <input
-                  type="text"
-                  className={`form-control ${
-                    this.getError('phone') ? "is-invalid" : ''
-                  }`}
-                  name="phone"
-                  placeholder="Điện thoại... "
-                  onChange={this.handleChangeFormAdd}
-                  value={phone}
-                />
-                {this.getError('phone') ? (
-                  <div className="invalid-feedback">{this.getError('phone')}</div>
-                ) : null}
-              </div>
-
-              <div className="mb-3">
-                <label>Trạng thái</label>
-                <select
-                  name="status"
-                  className={`form-select ${
-                    this.getError('status') ? "is-invalid" : ''
-                  }`}
-                  onChange={this.handleChangeFormAdd}
-                  value={status}
-                >
-                  <option value="0">Chưa kích hoạt</option>
-                  <option value="1">Kích hoạt</option>
-                </select>
-                {this.getError('status') ? (
-                  <div className="invalid-feedback">{this.getError('status')}</div>
-                ) : null}
-              </div>
-              <button type="submit" className="btn btn-primary me-3">
-                Lưu
-              </button>
-              <button type="submit" className="btn btn-primary me-3"
-              onClick={(e) => {
-                e.preventDefault();
-                this.handleSubmitAdd(true);
-              }}>
-                Lưu & Thêm
-              </button>
+          <Modal
+            show={modal.isShow}
+            animation={true}
+            onEscapeKeyDown={this.closeModalAdd}
+          >
+            <Modal.Header>
+              <Modal.Title>Thêm khách hàng</Modal.Title>
               <button
                 type="button"
-                className="btn btn-danger"
+                className="btn-close"
                 onClick={this.closeModalAdd}
+              ></button>
+            </Modal.Header>
+            <Modal.Body>
+              {this.isErrors(errors) ? (
+                <div className="alert alert-danger text-center">
+                  Vui lòng kiểm tra dữ liệu bên dưới
+                </div>
+              ) : null}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  this.handleSubmitAdd();
+                }}
               >
-                Đóng
-              </button>
-            </form>
-          </Modal.Body>
-        </Modal>
+                <div className="mb-3">
+                  <label>Tên</label>
+                  <input
+                    type="text"
+                    className={`form-control ${
+                      this.getError("name") ? "is-invalid" : ""
+                    }`}
+                    name="name"
+                    placeholder="Tên... "
+                    onChange={this.handleChangeFormAdd}
+                    value={name}
+                  />
+                  {this.getError("name") ? (
+                    <div className="invalid-feedback">
+                      {this.getError("name")}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mb-3">
+                  <label>Email</label>
+                  <input
+                    type="text"
+                    className={`form-control ${
+                      this.getError("email") ? "is-invalid" : ""
+                    }`}
+                    name="email"
+                    placeholder="Email... "
+                    onChange={this.handleChangeFormAdd}
+                    value={email}
+                  />
+                  {this.getError("email") ? (
+                    <div className="invalid-feedback">
+                      {this.getError("email")}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mb-3">
+                  <label>Điện thoại</label>
+                  <input
+                    type="text"
+                    className={`form-control ${
+                      this.getError("phone") ? "is-invalid" : ""
+                    }`}
+                    name="phone"
+                    placeholder="Điện thoại... "
+                    onChange={this.handleChangeFormAdd}
+                    value={phone}
+                  />
+                  {this.getError("phone") ? (
+                    <div className="invalid-feedback">
+                      {this.getError("phone")}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mb-3">
+                  <label>Trạng thái</label>
+                  <select
+                    name="status"
+                    className={`form-select ${
+                      this.getError("status") ? "is-invalid" : ""
+                    }`}
+                    onChange={this.handleChangeFormAdd}
+                    value={status}
+                  >
+                    <option value="0">Chưa kích hoạt</option>
+                    <option value="1">Kích hoạt</option>
+                  </select>
+                  {this.getError("status") ? (
+                    <div className="invalid-feedback">
+                      {this.getError("status")}
+                    </div>
+                  ) : null}
+                </div>
+                <button type="submit" className="btn btn-primary me-3">
+                  Lưu
+                </button>
+                {currentId == 0 ? (
+                  <button
+                    type="submit"
+                    className="btn btn-primary me-3"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      this.handleSubmitAdd(true);
+                    }}
+                  >
+                    Lưu & Thêm
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={this.closeModalAdd}
+                >
+                  Đóng
+                </button>
+              </form>
+            </Modal.Body>
+          </Modal>
         </div>
-        
+
         <ToastContainer />
       </div>
     );
