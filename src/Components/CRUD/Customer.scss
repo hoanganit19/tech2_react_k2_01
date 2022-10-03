@@ -1,19 +1,19 @@
-body{
-    color: red;
+// body{
+//     color: red;
 
-    .header{
-        a{
-            color: blue;
-            text-decoration: none;
+//     .header{
+//         a{
+//             color: blue;
+//             text-decoration: none;
 
-            &:hover{
-                color: yellow;
-                font-weight: bold;
-            }
+//             &:hover{
+//                 color: yellow;
+//                 font-weight: bold;
+//             }
 
-            &::before{
-                content: 'a';
-            }
-        }
-    }
-}
+//             &::before{
+//                 content: 'a';
+//             }
+//         }
+//     }
+// }
