@@ -23,4 +23,10 @@ export default class HttpClient{
             body: JSON.stringify(data)
         });
     } 
+
+    delete = (url, id) => {
+        return fetch(url+'/'+id, {
+            method: 'DELETE'
+        });
+    }
 }

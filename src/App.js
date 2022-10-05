@@ -12,6 +12,8 @@ import Counter from "./Components/Counter";
 import Login from "./Components/Form/Login";
 import Toggle from "./Components/Toggle/Toggle";
 import Customer from "./Components/CRUD/Customer";
+import Ref02 from "./Components/Ref/Ref02";
+import CheckAll from "./Components/Ref/CheckAll";
 
 function App() {
   const content = {
@@ -112,6 +114,8 @@ function App() {
       {/* <Tech2 onData={handleData}/> */}
 
       <Customer />
+      <hr/>
+      <CheckAll />
     </>
   );
 }

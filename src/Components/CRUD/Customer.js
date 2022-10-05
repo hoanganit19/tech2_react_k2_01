@@ -6,6 +6,7 @@ import HttpClient from "./HttpClient";
 import Modal from "react-bootstrap/Modal";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Swal from "sweetalert2";
 
 export class Customer extends Component {
   constructor(props) {
@@ -40,7 +41,7 @@ export class Customer extends Component {
         status: {},
       },
 
-      currentId: 0
+      currentId: 0,
     };
 
     this.customerApi = config.SERVER_API + "/customers";
@@ -171,7 +172,6 @@ export class Customer extends Component {
       this.getCustomers(filtersObj);
     }
 
-    
     // console.log('Update...');
     //Đặc biệt lưu ý phải check prevState và currentState => Nếu khác nhau thì sẽ gọi API
   };
@@ -230,7 +230,7 @@ export class Customer extends Component {
     const modal = { ...this.state.modal };
     modal.isShow = true;
     this.resetForm();
-    this.setState({ modal: modal, currentId: 0});
+    this.setState({ modal: modal, currentId: 0 });
   };
 
   closeModalAdd = () => {
@@ -241,6 +241,8 @@ export class Customer extends Component {
 
   handleSubmitAdd = (isAdd = false) => {
     let { name, email, phone, status } = this.state.form;
+
+    const { currentId } = this.state;
 
     status = parseInt(status);
 
@@ -278,33 +280,49 @@ export class Customer extends Component {
     });
 
     if (!this.isErrors(errors)) {
-      console.log(this.state.currentId);
-      if (this.state.currentId == 0){
+      if (this.state.currentId == 0) {
         //Thêm dữ liệu
 
         this.client
-        .post(this.customerApi, {
-          name: name,
-          email: email,
-          phone: phone,
-          status: status,
-        })
-        .then((response) => response.json())
-        .then((response) => {
-          if (response !== "") {
-            toast.success("Thêm khách hàng thành công");
-            this.resetForm();
-            this.getCustomers();
+          .post(this.customerApi, {
+            name: name,
+            email: email,
+            phone: phone,
+            status: status,
+          })
+          .then((response) => response.json())
+          .then((response) => {
+            if (response !== "") {
+              toast.success("Thêm khách hàng thành công");
+              this.resetForm();
+              this.getCustomers();
 
-            if (!isAdd) {
+              if (!isAdd) {
+                this.closeModalAdd();
+              }
+            }
+          });
+      } else {
+        this.client
+          .put(
+            this.customerApi,
+            {
+              name: name,
+              email: email,
+              phone: phone,
+              status: status,
+            },
+            currentId
+          )
+          .then((response) => response.json())
+          .then((response) => {
+            if (response !== "") {
+              toast.success("Cập nhật khách hàng thành công");
+              this.getCustomers();
               this.closeModalAdd();
             }
-          }
-        });
-      }else{
-        console.log('Update');
+          });
       }
-      
     }
   };
 
@@ -376,16 +394,37 @@ export class Customer extends Component {
       .get(customerDetailApi)
       .then((response) => response.json())
       .then((customer) => {
-
         this.openModalAdd();
 
         this.setState({
           form: customer,
-          currentId: customerId
+          currentId: customerId,
         });
-
-        
       });
+  };
+
+  handleDeleteCustomer = (customerId) => {
+    Swal.fire({
+      title: "Bạn có chắc chắn?",
+      text: "Nếu xoá bạn không thể khôi phục!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ok, Xoá đi!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.client
+          .delete(this.customerApi, customerId)
+          .then((response) => response.json())
+          .then((response) => {
+            if (response !== "") {
+              toast.success("Xoá khách hàng thành công");
+              this.getCustomers();
+            }
+          });
+      }
+    });
   };
 
   render() {
@@ -419,14 +458,21 @@ export class Customer extends Component {
       );
 
       const deleteBtn = (
-        <a href="#" className="btn btn-danger">
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            this.handleDeleteCustomer(id);
+          }}
+          className="btn btn-danger"
+        >
           Xoá
         </a>
       );
 
       return (
         <tr key={id}>
-          <td>{index + 1}</td>
+          <td><input type="checkbox" /></td>
           <td>{name}</td>
           <td>{email}</td>
           <td>{phone}</td>
@@ -480,7 +526,7 @@ export class Customer extends Component {
         <table className="table table-bordered">
           <thead>
             <tr>
-              <th width="5%">STT</th>
+              <th width="5%"><input type="checkbox"/></th>
               <th>Tên</th>
               <th>Email</th>
               <th>Điện thoại</th>
@@ -491,6 +537,7 @@ export class Customer extends Component {
           </thead>
           <tbody>{jsx}</tbody>
         </table>
+        <button type="button" className="btn btn-danger disabled">Xoá đã chọn (0)</button>
         {this.renderPaginate()}
         <div onKeyUp={this.handleKeyboardSave}>
           <Modal
