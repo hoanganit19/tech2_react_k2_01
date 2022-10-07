@@ -7,10 +7,13 @@ import Modal from "react-bootstrap/Modal";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
+import Color from "../HOC/Color";
 
 export class Customer extends Component {
   constructor(props) {
     super(props);
+
+    console.log(props);
 
     this.state = {
       customers: [],
@@ -675,7 +678,7 @@ export class Customer extends Component {
   }
 }
 
-export default Customer;
+export default Color(Customer);
 
 /*
 Các bước xây dựng tính năng phân trang

@@ -8,12 +8,14 @@ import Products from "./Components/Products";
 import ProductItem from "./Components/ProductItem";
 import Tech2 from "./Components/Tech2";
 import ConvertCurrency from "./Components/ConvertCurrency";
-import Counter from "./Components/Counter";
+// import Counter from "./Components/Counter";
 import Login from "./Components/Form/Login";
 import Toggle from "./Components/Toggle/Toggle";
 import Customer from "./Components/CRUD/Customer";
 import Ref02 from "./Components/Ref/Ref02";
 import CheckAll from "./Components/Ref/CheckAll";
+import Counter from "./Components/HOC/Counter";
+import ComA from "./Components/Context/ComA";
 
 function App() {
   const content = {
@@ -113,9 +115,11 @@ function App() {
       </Products> */}
       {/* <Tech2 onData={handleData}/> */}
 
-      <Customer />
+      {/* <Customer name="Hoàng An"/>
       <hr/>
-      <CheckAll />
+      <CheckAll /> */}
+      {/* <Counter /> */}
+      <ComA />
     </>
   );
 }

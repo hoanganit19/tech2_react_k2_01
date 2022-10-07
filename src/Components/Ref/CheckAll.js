@@ -1,4 +1,5 @@
 import React, { Component, createRef } from "react";
+import Color from "../HOC/Color";
 
 export class CheckAll extends Component {
   constructor() {
@@ -6,53 +7,45 @@ export class CheckAll extends Component {
 
     this.state = {
       customers: ["Item 1", "Item 2", "Item 3", "Item 4"],
-      deleteCount: 0
+      deleteCount: 0,
     };
 
     this.checkAllRef = createRef();
-
   }
 
   handleCheckAll = (e) => {
     const checkAllStatus = e.target.checked;
-    
-    this.checkItemRef.forEach(checkItem => {
-        checkItem.current.checked = checkAllStatus;
-    })
 
+    this.checkItemRef.forEach((checkItem) => {
+      checkItem.current.checked = checkAllStatus;
+    });
 
     this.setState({
-        deleteCount: checkAllStatus?this.checkItemRef.length:0
-    })
+      deleteCount: checkAllStatus ? this.checkItemRef.length : 0,
+    });
   };
 
   handleCheckItem = (e) => {
     const checkItemStatus = e.target.checked;
 
-    if (!checkItemStatus){
-        this.checkAllRef.current.checked = false;
-        this.setState({
-            deleteCount: this.state.deleteCount-1
-        })
-        return; //Thoát hàm
-    }
-
-    let count = 0;
-    const status = this.checkItemRef.every(checkItem => {
-        if (checkItem.current.checked){
-            count++;
-            return true;
-        }
-       
-        return false;
-    }); 
-
-    this.checkAllRef.current.checked = status;
+    if (!checkItemStatus) {
+      this.checkAllRef.current.checked = false;
+      this.setState({
+        deleteCount: this.state.deleteCount - 1,
+      });
+      return; //Thoát hàm
+    } 
 
     this.setState({
-        deleteCount: count
-    })
-  }
+        deleteCount: this.state.deleteCount + 1,
+      });
+
+    const status = this.checkItemRef.every((checkItem) => {
+      return checkItem.current.checked;
+    });
+
+    this.checkAllRef.current.checked = status;
+  };
 
   render() {
     /*
@@ -61,21 +54,31 @@ export class CheckAll extends Component {
     */
     const { customers, deleteCount } = this.state;
     this.checkItemRef = [];
-    const disabled = {disabled: deleteCount>0?false:true}
+    const disabled = { disabled: deleteCount > 0 ? false : true };
     return (
       <div style={{ margin: "3%" }}>
         <p>
-          <input type={"checkbox"} ref={this.checkAllRef} onChange={this.handleCheckAll} /> Check All
+          <input
+            type={"checkbox"}
+            ref={this.checkAllRef}
+            onChange={this.handleCheckAll}
+          />{" "}
+          Check All
         </p>
         {customers.map((customer, index) => {
-            this.checkItemRef.push(createRef());
-            return (
-                <p key={index}>
-                  <input ref={this.checkItemRef[index]} type={"checkbox"} onChange={this.handleCheckItem} /> {customer}
-                </p>
-              )
+          this.checkItemRef.push(createRef());
+          return (
+            <p key={index}>
+              <input
+                ref={this.checkItemRef[index]}
+                type={"checkbox"}
+                onChange={this.handleCheckItem}
+              />
+              {customer}
+            </p>
+          );
         })}
-        
+
         <button type="button" {...disabled}>
           Xoá đã chọn ({deleteCount})
         </button>
@@ -84,4 +87,4 @@ export class CheckAll extends Component {
   }
 }
 
-export default CheckAll;
+export default Color(CheckAll);
